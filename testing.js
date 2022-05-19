@@ -14,7 +14,13 @@
         return e.date
     })
 
-    const payable = eligibleDates.reduce(function (memo, d) {
+    // Eliminate duplicated dates
+    // (This is important in case the person clocked in and out more than one time in the same day)
+    let uniqueDates = eligibleDates.filter((date, index) => {
+        return eligibleDates.indexOf(date) === index;
+    });
+
+    const payable = uniqueDates.reduce(function (memo, d) {
         return memo + wagesEarnedOnDate.call(this, d)
     }.bind(this), 0) // <== Hm, why did we need to add bind() there? We'll discuss soon!
 
@@ -73,22 +79,12 @@ function hoursWorkedOnDate(date) {
         if (out['date'] === date) {
             hourOut = out['hour']
 
-            hourIn = this.timeInEvents[timeOutIndex].hour;
-            // let timeInIndex = 0;
-            // for (const inV of this.timeInEvents) {
-            //     if (inV['date'] === date || timeInIndex === timeOutIndex) {
-            //         hourIn = inV['hour']
-            //         break;
-            //     }
-            //     timeInIndex++;
-            // };
-        
+            hourIn = this.timeInEvents[timeOutIndex].hour;        
             totalHours += (hourOut-hourIn)/100;
         }
         timeOutIndex++;
     };
 
-    // return (hourOut-hourIn)/100;
     return totalHours;
 }
 
@@ -231,6 +227,8 @@ function Natalia() {
 
     timesOutRecordRow[1].forEach(function(timeOutStamp){
         createTimeOutEvent.call(natalia, timeOutStamp)
+    })
+    timesOutRecordRow[1].forEach(function(timeOutStamp){
         console.log("*" + timeOutStamp.substr(0, 10) + "*");
         console.log("wagesEarnedOnDate: " + wagesEarnedOnDate.call(natalia, timeOutStamp.substr(0, 10)));
     })

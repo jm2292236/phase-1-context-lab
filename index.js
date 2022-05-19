@@ -9,17 +9,37 @@
  for you to use if you need it!
  */
 
-const allWagesFor = function () {
+ const allWagesFor = function () {
     const eligibleDates = this.timeInEvents.map(function (e) {
         return e.date
     })
 
-    const payable = eligibleDates.reduce(function (memo, d) {
+    // Eliminate duplicated dates
+    // (This is important in case the person clocked in and out more than one time in the same day)
+    let uniqueDates = eligibleDates.filter((date, index) => {
+        return eligibleDates.indexOf(date) === index;
+    });
+
+    const payable = uniqueDates.reduce(function (memo, d) {
         return memo + wagesEarnedOnDate.call(this, d)
     }.bind(this), 0) // <== Hm, why did we need to add bind() there? We'll discuss soon!
 
     return payable
 }
+
+
+// const allWagesFor = function () {
+//     const eligibleDates = this.timeInEvents.map(function (e) {
+//         return e.date
+//     })
+
+//     const payable = eligibleDates.reduce(function (memo, d) {
+//         return memo + wagesEarnedOnDate.call(this, d)
+//     }.bind(this), 0) // <== Hm, why did we need to add bind() there? We'll discuss soon!
+
+//     return payable
+// }
+
 
 function createEmployeeRecord([firstName, familyName, title, payPerHour]) {
     let empObj = {
@@ -33,10 +53,12 @@ function createEmployeeRecord([firstName, familyName, title, payPerHour]) {
     return empObj;
 }
 
+
 // Creates multiple employee records
 function createEmployeeRecords(records) {
     return records.map(createEmployeeRecord);
 }
+
 
 // Add a time in event to the employee record
 function createTimeInEvent(timeStamp) {
@@ -51,6 +73,7 @@ function createTimeInEvent(timeStamp) {
     return this;
 }
 
+
 // Add a time out event to the employee record
 function createTimeOutEvent(timeStamp) {
     let dateArr = timeStamp.split(' ')
@@ -64,50 +87,58 @@ function createTimeOutEvent(timeStamp) {
     return this;
 }
 
+
 // Calculate the number of hours worked on a date
 function hoursWorkedOnDate(date) {
     let hourOut, hourIn;
     let timeOutIndex = 0;
+    let totalHours = 0;
     for (const out of this.timeOutEvents) {
         if (out['date'] === date) {
             hourOut = out['hour']
 
-            let timeInIndex = 0;
-            for (const inV of this.timeInEvents) {
-                if (inV['date'] === date || timeInIndex === timeOutIndex) {
-                    hourIn = inV['hour']
-                    break;
-                }
-                timeInIndex++;
-            };
-        
+            // Find the matching time in event looking at the same index position in the timeIn events array
+            hourIn = this.timeInEvents[timeOutIndex].hour;
+            totalHours += (hourOut-hourIn)/100;
         }
         timeOutIndex++;
     };
 
-    return (hourOut-hourIn)/100;
+    return totalHours;
 }
+
+
+// Calculate the number of hours worked on a date
 // function hoursWorkedOnDate(date) {
 //     let hourOut, hourIn;
+//     let timeOutIndex = 0;
 //     for (const out of this.timeOutEvents) {
 //         if (out['date'] === date) {
 //             hourOut = out['hour']
-//         }
-//     };
 
-//     for (const inV of this.timeInEvents) {
-//         if (inV['date'] === date) {
-//             hourIn = inV['hour']
+//             // Find the matching time in event looking at the same index position in the timeIn events array
+//             let timeInIndex = 0;
+//             for (const inV of this.timeInEvents) {
+//                 if (inV['date'] === date || timeInIndex === timeOutIndex) {
+//                     hourIn = inV['hour']
+//                     break;
+//                 }
+//                 timeInIndex++;
+//             };
+        
 //         }
+//         timeOutIndex++;
 //     };
 
 //     return (hourOut-hourIn)/100;
 // }
 
+
 // Calculate the total wage earned by an employee on a specific date
 function wagesEarnedOnDate(date) {
     return hoursWorkedOnDate.call(this, date) * this.payPerHour;
 }
+
 
 function calculatePayroll(arrEmployees) {
     const payroll = arrEmployees.reduce(function(totalEmployee, employee) {
@@ -116,6 +147,7 @@ function calculatePayroll(arrEmployees) {
 
     return payroll;
 }
+
 
 function findEmployeeByFirstName(srcArray, firstName) {
     return srcArray.find((firstName, index, srcArray) => srcArray[index]);

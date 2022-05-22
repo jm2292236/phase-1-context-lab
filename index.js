@@ -9,36 +9,36 @@
  for you to use if you need it!
  */
 
- const allWagesFor = function () {
-    const eligibleDates = this.timeInEvents.map(function (e) {
-        return e.date
-    })
-
-    // Eliminate duplicated dates
-    // (This is important in case the person clocked in and out more than one time in the same day)
-    let uniqueDates = eligibleDates.filter((date, index) => {
-        return eligibleDates.indexOf(date) === index;
-    });
-
-    const payable = uniqueDates.reduce(function (memo, d) {
-        return memo + wagesEarnedOnDate.call(this, d)
-    }.bind(this), 0) // <== Hm, why did we need to add bind() there? We'll discuss soon!
-
-    return payable
-}
-
-
-// const allWagesFor = function () {
+//  const allWagesFor = function () {
 //     const eligibleDates = this.timeInEvents.map(function (e) {
 //         return e.date
 //     })
 
-//     const payable = eligibleDates.reduce(function (memo, d) {
+//     // Eliminate duplicated dates
+//     // (This is important in case the person clocked in and out more than one time in the same day)
+//     let uniqueDates = eligibleDates.filter((date, index) => {
+//         return eligibleDates.indexOf(date) === index;
+//     });
+
+//     const payable = uniqueDates.reduce(function (memo, d) {
 //         return memo + wagesEarnedOnDate.call(this, d)
 //     }.bind(this), 0) // <== Hm, why did we need to add bind() there? We'll discuss soon!
 
 //     return payable
 // }
+
+
+const allWagesFor = function () {
+    const eligibleDates = this.timeInEvents.map(function (e) {
+        return e.date
+    })
+
+    const payable = eligibleDates.reduce(function (memo, d) {
+        return memo + wagesEarnedOnDate.call(this, d)
+    }.bind(this), 0) // <== Hm, why did we need to add bind() there? We'll discuss soon!
+
+    return payable
+}
 
 
 function createEmployeeRecord([firstName, familyName, title, payPerHour]) {
@@ -89,49 +89,50 @@ function createTimeOutEvent(timeStamp) {
 
 
 // Calculate the number of hours worked on a date
-function hoursWorkedOnDate(date) {
-    let hourOut, hourIn;
-    let timeOutIndex = 0;
-    let totalHours = 0;
-    for (const out of this.timeOutEvents) {
-        if (out['date'] === date) {
-            hourOut = out['hour']
-
-            // Find the matching time in event looking at the same index position in the timeIn events array
-            hourIn = this.timeInEvents[timeOutIndex].hour;
-            totalHours += (hourOut-hourIn)/100;
-        }
-        timeOutIndex++;
-    };
-
-    return totalHours;
-}
-
-
-// Calculate the number of hours worked on a date
+// *** To make it work as it should be this function and the allWagesFor function that is commented out need to be active ***
 // function hoursWorkedOnDate(date) {
 //     let hourOut, hourIn;
 //     let timeOutIndex = 0;
+//     let totalHours = 0;
 //     for (const out of this.timeOutEvents) {
 //         if (out['date'] === date) {
 //             hourOut = out['hour']
 
 //             // Find the matching time in event looking at the same index position in the timeIn events array
-//             let timeInIndex = 0;
-//             for (const inV of this.timeInEvents) {
-//                 if (inV['date'] === date || timeInIndex === timeOutIndex) {
-//                     hourIn = inV['hour']
-//                     break;
-//                 }
-//                 timeInIndex++;
-//             };
-        
+//             hourIn = this.timeInEvents[timeOutIndex].hour;
+//             totalHours += (hourOut-hourIn)/100;
 //         }
 //         timeOutIndex++;
 //     };
 
-//     return (hourOut-hourIn)/100;
+//     return totalHours;
 // }
+
+
+// Calculate the number of hours worked on a date
+function hoursWorkedOnDate(date) {
+    let hourOut, hourIn;
+    let timeOutIndex = 0;
+    for (const out of this.timeOutEvents) {
+        if (out['date'] === date) {
+            hourOut = out['hour']
+
+            // Find the matching time in event looking at the same index position in the timeIn events array
+            let timeInIndex = 0;
+            for (const inV of this.timeInEvents) {
+                if (inV['date'] === date || timeInIndex === timeOutIndex) {
+                    hourIn = inV['hour']
+                    break;
+                }
+                timeInIndex++;
+            };
+        
+        }
+        timeOutIndex++;
+    };
+
+    return (hourOut-hourIn)/100;
+}
 
 
 // Calculate the total wage earned by an employee on a specific date
